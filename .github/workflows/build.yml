@@ -1,0 +1,21 @@
+
+name: Build iOS app (unsigned)
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build unsigned app and package IPA
+        run: |
+          mkdir -p build/Payload
+          xcodebuild -project IslandApp.xcodeproj -target IslandApp -configuration Release -sdk iphoneos -derivedDataPath build/Derived CODE_SIGNING_ALLOWED=NO
+          APP=$(find build/Derived/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP"
+          cp -R "$APP" build/Payload/
+          cd build && zip -r IslandApp-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IslandApp-unsigned-ipa
+          path: build/IslandApp-unsigned.ipa
